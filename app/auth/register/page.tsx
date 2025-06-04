@@ -25,6 +25,37 @@ export default function Register() {
     setError("");
     setSuccess("");
 
+    // Basic validation
+    if (!name || !email || !password || !confirmPassword) {
+      setError("All fields are required");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate email domain
+    const allowedDomains = ["stello.com", "lightscape.com"];
+    const emailDomain = email.split("@")[1];
+    if (!emailDomain || !allowedDomains.includes(emailDomain)) {
+      setError("Email domain not allowed. Please use an email from stello.com or lightscape.com");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      setIsLoading(false);
+      return;
+    }
+
     // Validate passwords match
     if (password !== confirmPassword) {
       setError("Passwords do not match");

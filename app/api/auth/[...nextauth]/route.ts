@@ -13,30 +13,55 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
-        }
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Email and password are required");
+          }
 
-        await connectToDatabase();
-        
-        const user = await User.findOne({ email: credentials.email });
-        
-        if (!user) {
-          throw new Error("No user found with this email");
+          // Connect to database with error handling
+          try {
+            await connectToDatabase();
+          } catch (error) {
+            console.error("Database connection error during login:", error);
+            throw new Error("Database connection failed. Please try again later.");
+          }
+          
+          // Find user with error handling
+          let user;
+          try {
+            user = await User.findOne({ email: credentials.email });
+          } catch (error) {
+            console.error("Error finding user:", error);
+            throw new Error("Authentication service error. Please try again later.");
+          }
+          
+          if (!user) {
+            throw new Error("No user found with this email");
+          }
+          
+          // Compare password with error handling
+          let isPasswordValid;
+          try {
+            isPasswordValid = await compare(credentials.password, user.password);
+          } catch (error) {
+            console.error("Password comparison error:", error);
+            throw new Error("Authentication failed. Please try again.");
+          }
+          
+          if (!isPasswordValid) {
+            throw new Error("Invalid password");
+          }
+          
+          return {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            image: user.image,
+          };
+        } catch (error) {
+          console.error("Authentication error:", error);
+          throw error;
         }
-        
-        const isPasswordValid = await compare(credentials.password, user.password);
-        
-        if (!isPasswordValid) {
-          throw new Error("Invalid password");
-        }
-        
-        return {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          image: user.image,
-        };
       }
     })
   ],
@@ -66,6 +91,7 @@ const handler = NextAuth({
   // When deploying to production, set the NEXTAUTH_URL environment variable to the canonical URL of your site
   // For Vercel deployments, this is handled automatically
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST }; 

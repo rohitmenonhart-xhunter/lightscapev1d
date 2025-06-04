@@ -15,6 +15,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
     // Validate email domain
     const allowedDomains = ["stello.com", "lightscape.com"];
     const emailDomain = email.split("@")[1];
@@ -27,14 +36,30 @@ export async function POST(req: NextRequest) {
     }
 
     // Connect to database
-    await connectToDatabase();
+    try {
+      await connectToDatabase();
+    } catch (dbError) {
+      console.error("Database connection error:", dbError);
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 500 }
+      );
+    }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    try {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "User with this email already exists" },
+          { status: 409 }
+        );
+      }
+    } catch (findError) {
+      console.error("Error checking existing user:", findError);
       return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 409 }
+        { error: "Error checking user existence" },
+        { status: 500 }
       );
     }
 
@@ -42,24 +67,32 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await hash(password, 12);
 
     // Create new user
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
+    try {
+      const user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+      });
 
-    // Return success without sending the password
-    const newUser = {
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt,
-    };
+      // Return success without sending the password
+      const newUser = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+      };
 
-    return NextResponse.json(
-      { message: "User registered successfully", user: newUser },
-      { status: 201 }
-    );
+      return NextResponse.json(
+        { message: "User registered successfully", user: newUser },
+        { status: 201 }
+      );
+    } catch (createError) {
+      console.error("Error creating user:", createError);
+      return NextResponse.json(
+        { error: "Failed to create user" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(

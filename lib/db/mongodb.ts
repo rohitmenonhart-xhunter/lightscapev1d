@@ -14,12 +14,26 @@ export const connectToDatabase = async () => {
   }
 
   try {
-    await mongoose.connect(MONGODB_URI);
+    const opts = {
+      bufferCommands: true,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    };
+
+    await mongoose.connect(MONGODB_URI, opts);
     isConnected = true;
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
+    throw new Error(`Unable to connect to database: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
+
+// Handle connection errors after initial connection
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+  isConnected = false;
+});
 
 export default connectToDatabase; 
