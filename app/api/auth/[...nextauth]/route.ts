@@ -63,6 +63,8 @@ const handler = NextAuth({
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  // When deploying to production, set the NEXTAUTH_URL environment variable to the canonical URL of your site
+  // For Vercel deployments, this is handled automatically
   secret: process.env.NEXTAUTH_SECRET,
 });
 
