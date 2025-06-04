@@ -7,7 +7,10 @@ if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-// Define connection state
+/**
+ * Global is used here to maintain connection state across hot reloads
+ * in development.
+ */
 let isConnected = false;
 
 export const connectToDatabase = async () => {
@@ -17,21 +20,21 @@ export const connectToDatabase = async () => {
   }
 
   try {
-    const opts = {
+    // If there's an existing connection but it's not ready, disconnect first
+    if (mongoose.connections[0].readyState) {
+      await mongoose.disconnect();
+    }
+
+    const connection = await mongoose.connect(MONGODB_URI, {
       bufferCommands: true,
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
-    };
+    });
 
-    // If there's an existing connection but it's not ready, disconnect first
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.disconnect();
-    }
-
-    await mongoose.connect(MONGODB_URI, opts);
     isConnected = true;
     console.log('MongoDB connected successfully');
+    return connection;
   } catch (error) {
     isConnected = false;
     console.error('Error connecting to MongoDB:', error);

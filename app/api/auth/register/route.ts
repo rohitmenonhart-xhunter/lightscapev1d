@@ -41,14 +41,17 @@ export async function POST(req: NextRequest) {
     } catch (dbError) {
       console.error("Database connection error:", dbError);
       return NextResponse.json(
-        { error: "Database connection failed" },
+        { 
+          error: "Database connection failed",
+          details: dbError instanceof Error ? dbError.message : String(dbError)
+        },
         { status: 500 }
       );
     }
 
     // Check if user already exists
     try {
-      const existingUser = await User.findOne({ email });
+      const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
       if (existingUser) {
         return NextResponse.json(
           { error: "User with this email already exists" },
@@ -58,19 +61,34 @@ export async function POST(req: NextRequest) {
     } catch (findError) {
       console.error("Error checking existing user:", findError);
       return NextResponse.json(
-        { error: "Error checking user existence" },
+        { 
+          error: "Error checking user existence",
+          details: findError instanceof Error ? findError.message : String(findError)
+        },
         { status: 500 }
       );
     }
 
     // Hash password
-    const hashedPassword = await hash(password, 12);
+    let hashedPassword;
+    try {
+      hashedPassword = await hash(password, 12);
+    } catch (hashError) {
+      console.error("Password hashing error:", hashError);
+      return NextResponse.json(
+        { 
+          error: "Error processing password",
+          details: hashError instanceof Error ? hashError.message : String(hashError)
+        },
+        { status: 500 }
+      );
+    }
 
     // Create new user
     try {
       const user = await User.create({
-        name,
-        email,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
         password: hashedPassword,
       });
 
@@ -89,14 +107,21 @@ export async function POST(req: NextRequest) {
     } catch (createError) {
       console.error("Error creating user:", createError);
       return NextResponse.json(
-        { error: "Failed to create user" },
+        { 
+          error: "Failed to create user",
+          details: createError instanceof Error ? createError.message : String(createError),
+          code: createError instanceof Error && 'code' in createError ? (createError as any).code : 'UNKNOWN'
+        },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "An error occurred during registration" },
+      { 
+        error: "An error occurred during registration",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
