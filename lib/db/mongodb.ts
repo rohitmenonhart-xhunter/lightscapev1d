@@ -1,15 +1,18 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://rohitmanon2:rohit@cluster0.daclztf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+// Use environment variable only, remove hardcoded fallback for production
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
 
+// Define connection state
 let isConnected = false;
 
 export const connectToDatabase = async () => {
-  if (isConnected) {
+  // If already connected, return
+  if (isConnected && mongoose.connection.readyState === 1) {
     return;
   }
 
@@ -21,10 +24,16 @@ export const connectToDatabase = async () => {
       socketTimeoutMS: 45000,
     };
 
+    // If there's an existing connection but it's not ready, disconnect first
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+
     await mongoose.connect(MONGODB_URI, opts);
     isConnected = true;
     console.log('MongoDB connected successfully');
   } catch (error) {
+    isConnected = false;
     console.error('Error connecting to MongoDB:', error);
     throw new Error(`Unable to connect to database: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -33,6 +42,12 @@ export const connectToDatabase = async () => {
 // Handle connection errors after initial connection
 mongoose.connection.on('error', (err) => {
   console.error('MongoDB connection error:', err);
+  isConnected = false;
+});
+
+// Handle disconnection
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
   isConnected = false;
 });
 
