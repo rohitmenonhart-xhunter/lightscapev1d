@@ -481,6 +481,7 @@ export default function FloorPlanUpload() {
 
   const handleDownload = () => {
     if (generatedImage) {
+      // For base64 data URLs, we can directly use them for download
       const link = document.createElement('a');
       link.href = generatedImage;
       link.download = `belecure-floorplan-${Date.now()}.png`;

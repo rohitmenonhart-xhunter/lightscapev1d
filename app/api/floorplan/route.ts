@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI, { toFile } from "openai";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import path from "path";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -58,19 +56,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public/uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    // Save the uploaded file
+    // Convert the uploaded file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
+    
+    // Create a base64 representation of the original image
+    const originalBase64 = `data:${file.type};base64,${buffer.toString('base64')}`;
+    
+    // Convert the buffer to OpenAI-compatible format
     const fileName = `${uuidv4()}-${file.name}`;
-    const filePath = path.join(uploadsDir, fileName);
-    fs.writeFileSync(filePath, buffer);
-
-    // Convert the uploaded file to OpenAI-compatible format
     const imageFile = await toFile(buffer, fileName, { type: file.type });
 
     // Determine the size parameter based on the requested aspect ratio
@@ -108,17 +101,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Save the generated image
-    const generatedFileName = `generated-${uuidv4()}.png`;
-    const generatedFilePath = path.join(uploadsDir, generatedFileName);
-    const imageBuffer = Buffer.from(base64Image, "base64");
-    fs.writeFileSync(generatedFilePath, imageBuffer);
+    // Create a data URL for the generated image
+    const generatedBase64 = `data:image/png;base64,${base64Image}`;
 
-    // Return the response with the original image path and generated image path
+    // Return the response with the original and generated images as base64
     return NextResponse.json({
       success: true,
-      originalImage: `/uploads/${fileName}`,
-      generatedImage: `/uploads/${generatedFileName}`,
+      originalImage: originalBase64,
+      generatedImage: generatedBase64,
       aspectRatio: aspectRatio,
     });
   } catch (error: any) {
