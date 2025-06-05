@@ -24,13 +24,6 @@ export default function SignIn() {
     setIsLoading(true);
     setError("");
 
-    // Basic validation
-    if (!email || !password) {
-      setError("Email and password are required");
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const result = await signIn("credentials", {
         redirect: false,
@@ -40,16 +33,12 @@ export default function SignIn() {
 
       if (result?.error) {
         setError(result.error);
-        console.error("Sign in error:", result.error);
-      } else if (result?.ok) {
-        // Successful login
-        router.push(callbackUrl);
       } else {
-        setError("Authentication failed. Please try again.");
+        router.push(callbackUrl);
       }
     } catch (error) {
+      setError("An unexpected error occurred");
       console.error("Sign in error:", error);
-      setError("An unexpected error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
     }
