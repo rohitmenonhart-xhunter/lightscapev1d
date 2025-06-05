@@ -1,25 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
-import { SunMoon, Upload, Sparkles, Settings, LogOut, User, LayoutGrid } from "lucide-react";
+import { SunMoon, Upload, Sparkles, Settings, User, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import FloorPlanUpload from "@/components/dashboard/floor-plan-upload";
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const [greeting, setGreeting] = useState("");
   const [activeTab, setActiveTab] = useState("converter");
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
-  }, [status, router]);
+  const [userName, setUserName] = useState("User");
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -27,14 +19,6 @@ export default function Dashboard() {
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
   }, []);
-
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
@@ -54,19 +38,15 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-sm">
-              <User className="h-4 w-4" />
-              <span>{session?.user?.name}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-sm"
-              onClick={() => signOut({ callbackUrl: "/" })}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <Link href="/">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-sm"
+              >
+                Home
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -76,7 +56,7 @@ export default function Dashboard() {
         {/* Welcome section */}
         <section className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            {greeting}, {session?.user?.name?.split(" ")[0]}!
+            {greeting}!
           </h1>
           <p className="text-muted-foreground">
             Welcome to your Belecure dashboard. Start designing your perfect lighting experience.
@@ -151,28 +131,8 @@ export default function Dashboard() {
 
           {activeTab === "settings" && (
             <div className="bg-background/70 backdrop-blur-sm border border-border/40 rounded-xl p-6 md:p-8">
-              <h2 className="text-2xl font-semibold mb-6">Account Settings</h2>
+              <h2 className="text-2xl font-semibold mb-6">Settings</h2>
               <div className="space-y-6 max-w-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Name</label>
-                    <input 
-                      type="text" 
-                      value={session?.user?.name || ""} 
-                      disabled
-                      className="w-full p-2 rounded-md bg-muted/50 border border-border"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Email</label>
-                    <input 
-                      type="email" 
-                      value={session?.user?.email || ""} 
-                      disabled
-                      className="w-full p-2 rounded-md bg-muted/50 border border-border"
-                    />
-                  </div>
-                </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Subscription Plan</label>
                   <div className="flex items-center justify-between p-3 rounded-md bg-primary/10 border border-primary/20">

@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, SunMoon, LogIn, UserPlus } from "lucide-react";
+import { Menu, X, SunMoon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useSession, signOut } from "next-auth/react";
 
 const Navbar = () => {
-  const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -67,32 +65,9 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center space-x-4">
           <ThemeToggle />
-          
-          {status === "authenticated" ? (
-            <>
-              <Button variant="outline" className="font-medium" onClick={() => signOut({ callbackUrl: "/" })}>
-                Sign Out
-              </Button>
-              <Button className="font-medium" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" className="font-medium" asChild>
-                <Link href="/auth/signin">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Sign In
-                </Link>
-              </Button>
-              <Button className="font-medium" asChild>
-                <Link href="/auth/register">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Register
-                </Link>
-              </Button>
-            </>
-          )}
+          <Button className="font-medium" asChild>
+            <Link href="/dashboard">Dashboard</Link>
+          </Button>
         </div>
 
         {/* Mobile Navigation */}
@@ -146,25 +121,9 @@ const Navbar = () => {
               Pricing
             </Link>
             <div className="pt-4 flex flex-col space-y-3 px-4">
-              {status === "authenticated" ? (
-                <>
-                  <Button variant="outline" className="w-full font-medium" onClick={() => signOut({ callbackUrl: "/" })}>
-                    Sign Out
-                  </Button>
-                  <Button className="w-full font-medium" asChild>
-                    <Link href="/dashboard">Dashboard</Link>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="outline" className="w-full font-medium" asChild>
-                    <Link href="/auth/signin">Sign In</Link>
-                  </Button>
-                  <Button className="w-full font-medium" asChild>
-                    <Link href="/auth/register">Register</Link>
-                  </Button>
-                </>
-              )}
+              <Button className="w-full font-medium" asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
             </div>
           </div>
         </div>

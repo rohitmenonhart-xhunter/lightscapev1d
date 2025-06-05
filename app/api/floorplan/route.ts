@@ -3,7 +3,6 @@ import OpenAI, { toFile } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
-import { getServerSession } from "next-auth";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -38,12 +37,6 @@ The result should look like a professional architectural blueprint with the EXAC
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     // Parse the form data
     const formData = await req.formData();
     const file = formData.get("file") as File;
